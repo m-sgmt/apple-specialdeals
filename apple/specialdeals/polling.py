@@ -12,6 +12,7 @@ from specialdeals.models import Offer
 
 from pyquery import PyQuery as pq
 import re
+import datetime
 
 offer_price = {}
 
@@ -24,7 +25,6 @@ def get_Monitor(spec):
         None
 
 def get_CPU(spec):
-    #r_CPU = re.compile("([0-9.]+GHz.*Intel (Xeon E5|i[0-9]))(\[|)")
     r_CPU = re.compile("([0-9.]+GHz(\w+Intel i[0-9]| \w+ Intel Xeon E[0-9]))")
     try:
         result_CPU = r_CPU.search(spec)
@@ -41,7 +41,6 @@ def get_ModelYear(spec):
         None
 
 def get_RAM(spec):
-    #r_RAM = re.compile("\s([0-9]*GB( \([0-9]GB x [0-9]\) [0-9]+MHz DDR\w+ \w+RAM| [0-9]+MHz DDR\w+ \w+RAM|のメモリ))")
     r_RAM = re.compile("\s([0-9]*GB)(のメモリ|メモリ| [0-9]+MHz DDR\w+ \w+RAM|（[0-9]GB x [0-9]）)")
     try:
         result_RAM = r_RAM.search(spec)
@@ -96,13 +95,14 @@ def newOffer(product,price):
     offer.save()
 
 def checkSoldOffer():
-    for offer in Offer.objects.all():
-        if not offer_price.get(offer.product.product_id,True):
+    for offer in Offer.objects.filter(sold=False):
+        if not offer.product.product_id in offer_price:
             offer.sold = True
+            offer.end = datetime.datetime.now()
             offer.save()
 
 def getOffer(pd):
-    for offer in Offer.objects.all():
+    for offer in Offer.objects.filter(sold=False):
         if offer.product.product_id == pd.product_id:
             return offer
     return None
